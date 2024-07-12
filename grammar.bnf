@@ -1,0 +1,97 @@
+program_prime ::= program eof
+
+program ::= extern_list decl_list 
+        | decl_list
+
+# eliminate direct left recursion, shown in syntax analysis slide 48
+
+extern_list ::= extern extern_list_prime
+extern_list_prime ::= extern extern_list_prime
+                    | epsilon
+
+extern ::= "extern" type_spec IDENT "(" params ")" ";"
+
+decl_list ::= decl decl_list_prime
+decl_list_prime ::= decl decl_list_prime
+                    | epsilon
+
+decl ::= voidfun_decl 
+    |  typename_decl
+
+type_spec ::= "void"
+            |  var_type
+
+var_type  ::= "int" |  "float" |  "bool"
+
+voidfun_decl ::= "void" IDENT "(" params ")" block
+
+typename_decl ::= var_type IDENT varfun_decl
+varfun_decl ::= "(" params ")" block
+                | ";"
+
+params ::= param_list  
+        |  "void" | epsilon
+
+param_list ::= param param_list_prime
+param_list_prime ::= "," param param_list_prime
+                    | epsilon
+
+param ::= var_type IDENT
+
+block ::= "{" local_decls stmt_list "}"
+
+local_decls ::= local_decl local_decls_prime
+local_decls_prime ::= local_decl local_decls_prime
+                    | epsilon
+
+local_decl ::= var_type IDENT ";"
+
+stmt_list ::= stmt stmt_list_prime
+stmt_list_prime ::= stmt stmt_list_prime
+                    | epsilon
+
+stmt ::= expr_stmt 
+    |  block 
+    |  if_stmt 
+    |  while_stmt 
+    |  return_stmt
+
+expr_stmt ::= expr ";" 
+            |  ";"
+
+while_stmt ::= "while" "(" expr ")" stmt
+
+if_stmt ::= "if" "(" expr ")" block else_stmt
+
+else_stmt  ::= "else" block
+            |  epsilon
+
+return_stmt ::= "return" ";" 
+            |  "return" expr ";"    
+
+# enforce precedence, this is done in syntax analysis lecture slide 22
+# eliminate left recursion, slide 50
+rval ::= rval_one rval_prime
+rval_prime ::= "||" rval_one rval_prime | epsilon
+rval_one ::= rval_two rval_one_prime
+rval_one_prime ::= "&&" rval_two rval_one_prime | epsilon
+rval_two ::= rval_three rval_two_prime
+rval_two_prime ::= "==" rval_three rval_two_prime | "!=" rval_three rval_two_prime | epsilon
+rval_three ::= rval_four rval_three_prime
+rval_three_prime ::= "<=" rval_four rval_three_prime | "<" rval_four rval_three_prime | ">=" rval_four rval_three_prime | ">" rval_four rval_three_prime | epsilon
+rval_four ::= rval_five rval_four_prime
+rval_four_prime ::= "+" rval_five rval_four_prime | "-" rval_five rval_four_prime | epsilon
+rval_five ::= rval_six rval_five_prime 
+rval_five_prime ::= "*" rval_six rval_five_prime | "/" rval_six rval_five_prime | "%" rval_six rval_five_prime | epsilon
+rval_six ::= "-" rval_seven | "!" rval_seven | rval_seven
+rval_seven ::= "(" expr ")" | rval_eight
+rval_eight ::= IDENT | IDENT "(" args ")" | rval_nine
+rval_nine ::= INT_LIT | FLOAT_LIT | BOOL_LIT
+
+args ::= arg_list 
+    |  epsilon
+
+arg_list ::= expr arg_list_prime
+arg_list_prime ::= "," expr arg_list_prime
+                | epsilon
+
